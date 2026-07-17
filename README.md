@@ -2,7 +2,6 @@
 
 An Android 16 (API 36) application designed to monitor 5G cellular signal strength periodically.
 
-
 ## Features
 
 - **Real-time 5G Monitoring**: View current SS-RSRP, SS-SINR, and network type.

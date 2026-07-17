@@ -12,36 +12,53 @@ class SignalManager(private val context: Context) {
     @SuppressLint("MissingPermission")
     fun getCurrentSignalData(): SignalData {
         val allCellInfo = telephonyManager.allCellInfo
-        var nrSignal: SignalData? = null
+        var nrRsrp: Int? = null
+        var nrRsrq: Int? = null
+        var nrSinr: Int? = null
+        var nrDbm: Int? = null
+        var lteRsrp: Int? = null
+        var lteRsrq: Int? = null
+        var lteSinr: Int? = null
 
         for (info in allCellInfo) {
             if (info is CellInfoNr) {
                 val signalStrength = info.cellSignalStrength as CellSignalStrengthNr
-                nrSignal = SignalData(
-                    timestamp = System.currentTimeMillis(),
-                    networkType = "5G NR",
-                    rsrp = signalStrength.ssRsrp,
-                    rsrq = signalStrength.ssRsrq,
-                    sinr = signalStrength.ssSinr,
-                    dbm = signalStrength.dbm
-                )
-                break
+                nrRsrp = signalStrength.ssRsrp
+                nrRsrq = signalStrength.ssRsrq
+                nrSinr = signalStrength.ssSinr
+                nrDbm = signalStrength.dbm
+            }
+
+            if (info is CellInfoLte) {
+                val signalStrength = info.cellSignalStrength as CellSignalStrengthLte
+                lteRsrp = signalStrength.rsrp
+                lteRsrq = signalStrength.rsrq
+                lteSinr = signalStrength.rssnr
             }
         }
 
-        if (nrSignal == null) {
-            // Fallback for non-5G or if not detected
-            val networkType = when (telephonyManager.networkType) {
-                TelephonyManager.NETWORK_TYPE_NR -> "5G NR"
-                TelephonyManager.NETWORK_TYPE_LTE -> "4G LTE"
-                else -> "Other"
-            }
-            nrSignal = SignalData(
-                timestamp = System.currentTimeMillis(),
-                networkType = networkType
-            )
+        val networkType = when {
+            nrRsrp != null && lteRsrp != null -> "5G NR + 4G LTE"
+            nrRsrp != null -> "5G NR"
+            lteRsrp != null -> "4G LTE"
+            telephonyManager.networkType == TelephonyManager.NETWORK_TYPE_NR -> "5G NR"
+            telephonyManager.networkType == TelephonyManager.NETWORK_TYPE_LTE -> "4G LTE"
+            else -> "Other"
         }
 
-        return nrSignal
+        return SignalData(
+            timestamp = System.currentTimeMillis(),
+            networkType = networkType,
+            rsrp = nrRsrp ?: lteRsrp,
+            rsrq = nrRsrq ?: lteRsrq,
+            sinr = nrSinr ?: lteSinr,
+            dbm = nrDbm ?: lteRsrp,
+            nrRsrp = nrRsrp,
+            nrRsrq = nrRsrq,
+            nrSinr = nrSinr,
+            lteRsrp = lteRsrp,
+            lteRsrq = lteRsrq,
+            lteSinr = lteSinr
+        )
     }
 }
