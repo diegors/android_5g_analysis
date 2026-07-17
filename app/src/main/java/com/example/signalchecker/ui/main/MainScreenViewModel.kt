@@ -56,6 +56,12 @@ class MainScreenViewModel(application: Application) : AndroidViewModel(applicati
         _currentSignal.value = signalManager.getCurrentSignalData()
     }
 
+    fun captureAndAppendCurrentSignalToCsv(): Result<String> {
+        val signalData = signalManager.getCurrentSignalData()
+        _currentSignal.value = signalData
+        return appendRowsToCsv(listOf(signalData))
+    }
+
     private fun loadHistory() {
         val prefs = getApplication<Application>().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val historyJson = prefs.getString(HISTORY_KEY, "[]") ?: "[]"
@@ -124,11 +130,7 @@ class MainScreenViewModel(application: Application) : AndroidViewModel(applicati
         val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
 
         return try {
-            val appendedCount = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                appendForAndroidQAndAbove(context, pendingRows, format)
-            } else {
-                appendForPreQ(pendingRows, format)
-            }
+            val appendedCount = appendRowsToCsvInternal(context, pendingRows, format)
 
             val newestTimestamp = pendingRows.maxOf { it.timestamp }
             prefs.edit().putLong(LAST_EXPORTED_TIMESTAMP_KEY, newestTimestamp).apply()
@@ -136,6 +138,34 @@ class MainScreenViewModel(application: Application) : AndroidViewModel(applicati
             Result.success("Appended $appendedCount rows to $EXPORT_FILE_NAME")
         } catch (e: Exception) {
             Result.failure(e)
+        }
+    }
+
+    private fun appendRowsToCsv(rows: List<SignalData>): Result<String> {
+        if (rows.isEmpty()) {
+            return Result.success("No rows to append")
+        }
+
+        val context = getApplication<Application>()
+        val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+
+        return try {
+            val appendedCount = appendRowsToCsvInternal(context, rows, format)
+            Result.success("Appended $appendedCount rows to $EXPORT_FILE_NAME")
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    private fun appendRowsToCsvInternal(
+        context: Context,
+        rows: List<SignalData>,
+        format: SimpleDateFormat,
+    ): Int {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            appendForAndroidQAndAbove(context, rows, format)
+        } else {
+            appendForPreQ(rows, format)
         }
     }
 
@@ -172,14 +202,32 @@ class MainScreenViewModel(application: Application) : AndroidViewModel(applicati
                 ?: throw IllegalStateException("Could not create download entry")
         }
 
+        val currentHeader = if (existingUri != null && existingSize > 0L) {
+            resolver.openInputStream(targetUri)?.bufferedReader()?.use { it.readLine()?.trim() } ?: ""
+        } else {
+            ""
+        }
+        val header = csvHeader()
+        val shouldRewriteSchema = existingUri != null && existingSize > 0L && currentHeader != header
+
+        if (shouldRewriteSchema) {
+            resolver.openOutputStream(targetUri, "wt")?.bufferedWriter().use { writer ->
+                if (writer == null) {
+                    throw IllegalStateException("Could not open output stream")
+                }
+                writer.append(header)
+                writer.newLine()
+            }
+        }
+
         val shouldWriteHeader = existingUri == null || existingSize == 0L
         resolver.openOutputStream(targetUri, "wa")?.bufferedWriter().use { writer ->
             if (writer == null) {
                 throw IllegalStateException("Could not open output stream")
             }
 
-            if (shouldWriteHeader) {
-                writer.append(csvHeader())
+            if (shouldWriteHeader && !shouldRewriteSchema) {
+                writer.append(header)
                 writer.newLine()
             }
 
@@ -199,8 +247,14 @@ class MainScreenViewModel(application: Application) : AndroidViewModel(applicati
         }
 
         val outputFile = File(downloadsDir, EXPORT_FILE_NAME)
+        val header = csvHeader()
         if (!outputFile.exists() || outputFile.length() == 0L) {
-            outputFile.appendText(csvHeader() + "\n")
+            outputFile.appendText(header + "\n")
+        } else {
+            val firstLine = outputFile.bufferedReader().use { it.readLine()?.trim() ?: "" }
+            if (firstLine != header) {
+                outputFile.writeText(header + "\n")
+            }
         }
 
         rows.forEach { row ->
@@ -211,11 +265,13 @@ class MainScreenViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     private fun csvHeader(): String {
-        return "Timestamp,Network Type,5G RSRP (dBm),5G SINR (dB),4G RSRP (dBm),4G SINR (dB)"
+        return "Timestamp,Network Type,RSRP (dBm),SINR (dB)"
     }
 
     private fun csvRow(data: SignalData, format: SimpleDateFormat): String {
         val formattedTime = format.format(Date(data.timestamp))
-        return "$formattedTime,${data.networkType},${data.nrRsrp ?: data.rsrp ?: ""},${data.nrSinr ?: data.sinr ?: ""},${data.lteRsrp ?: ""},${data.lteSinr ?: ""}"
+        val rsrp = data.nrRsrp ?: data.lteRsrp ?: data.rsrp ?: ""
+        val sinr = data.nrSinr ?: data.lteSinr ?: data.sinr ?: ""
+        return "$formattedTime,${data.networkType},$rsrp,$sinr"
     }
 }

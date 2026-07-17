@@ -81,7 +81,7 @@ fun MainScreen(viewModel: MainScreenViewModel = viewModel()) {
                         Text("4G SINR: ${it.lteSinr ?: "N/A"} dB")
                     } ?: Text("Detecting...")
                     
-                    Button(onClick = { viewModel.refreshCurrentSignal() }, modifier = Modifier.padding(top = 8.dp)) {
+                    Button(onClick = { viewModel.captureAndAppendCurrentSignalToCsv() }, modifier = Modifier.padding(top = 8.dp)) {
                         Text("Refresh Now")
                     }
                 }
@@ -103,7 +103,10 @@ fun MainScreen(viewModel: MainScreenViewModel = viewModel()) {
                         Text("Stop Background Monitoring")
                     }
                 } else {
-                    Button(onClick = { viewModel.startMonitoring(intervalText.toLongOrNull() ?: 15) }) {
+                    Button(onClick = {
+                        viewModel.startMonitoring(intervalText.toLongOrNull() ?: 15)
+                        viewModel.captureAndAppendCurrentSignalToCsv()
+                    }) {
                         Text("Start Background Monitoring")
                     }
                 }
@@ -151,22 +154,20 @@ fun HistoryTable(history: List<SignalData>) {
         ) {
             Row(modifier = Modifier.padding(vertical = 8.dp)) {
                 TableCell("Timestamp", isHeader = true)
-                TableCell("Network", isHeader = true)
-                TableCell("5G RSRP", isHeader = true)
-                TableCell("5G SINR", isHeader = true)
-                TableCell("4G RSRP", isHeader = true)
-                TableCell("4G SINR", isHeader = true)
+                TableCell("Network Type", isHeader = true)
+                TableCell("RSRP (dBm)", isHeader = true)
+                TableCell("SINR (dB)", isHeader = true)
             }
             HorizontalDivider()
             LazyColumn(modifier = Modifier.heightIn(max = 320.dp)) {
                 items(history) { data ->
+                    val rsrp = data.nrRsrp ?: data.lteRsrp ?: data.rsrp
+                    val sinr = data.nrSinr ?: data.lteSinr ?: data.sinr
                     Row(modifier = Modifier.padding(vertical = 6.dp)) {
                         TableCell(format.format(Date(data.timestamp)))
                         TableCell(data.networkType)
-                        TableCell(data.nrRsrp?.toString() ?: "N/A")
-                        TableCell(data.nrSinr?.toString() ?: "N/A")
-                        TableCell(data.lteRsrp?.toString() ?: "N/A")
-                        TableCell(data.lteSinr?.toString() ?: "N/A")
+                        TableCell(rsrp?.toString() ?: "N/A")
+                        TableCell(sinr?.toString() ?: "N/A")
                     }
                     HorizontalDivider()
                 }
