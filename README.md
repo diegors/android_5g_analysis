@@ -5,6 +5,7 @@ An Android 16 (API 36) application designed to monitor 5G cellular signal streng
 ## Features
 
 - **Real-time 5G Monitoring**: View current SS-RSRP, SS-SINR, and network type.
+- **Wi-Fi Signal Page**: Open a dedicated screen to view current Wi-Fi details such as SSID, BSSID, RSSI, signal level, and link speed.
 - **Background Tracking**: Uses `WorkManager` to check signal strength every X minutes (minimum 15 minutes as per system limits).
 - **History Logs**: Keeps track of the last 50 signal checks.
 - **Data Export**: Export signal history as a CSV file via the share button.
@@ -14,6 +15,8 @@ An Android 16 (API 36) application designed to monitor 5G cellular signal streng
 
 The app requires the following permissions to function correctly:
 - `ACCESS_FINE_LOCATION`: Required to access cellular network information.
+- `ACCESS_COARSE_LOCATION`: Required for basic location-based signal access.
+- `ACCESS_WIFI_STATE`: Required to read current Wi-Fi connection information on the new Wi-Fi signal page.
 - `READ_PHONE_STATE`: Required to detect the cellular network type.
 - `POST_NOTIFICATIONS`: Required to show results from background checks.
 
@@ -41,6 +44,11 @@ To build the project from the command line:
 ```bash
 ./gradlew assembleDebug
 ```
+
+### 4. Using the New Wi-Fi Screen
+1. Launch the app on a device or emulator with Wi-Fi enabled.
+2. Open the main screen and tap **View Wi-Fi Signal**.
+3. Review the current Wi-Fi connection details shown on the new page.
 
 ## Tech Stack
 

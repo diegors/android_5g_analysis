@@ -22,7 +22,10 @@ import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(viewModel: MainScreenViewModel = viewModel()) {
+fun MainScreen(
+    viewModel: MainScreenViewModel = viewModel(),
+    onNavigateToWifi: () -> Unit = {}
+) {
     val context = LocalContext.current
     val history by viewModel.history.collectAsState()
     val currentSignal by viewModel.currentSignal.collectAsState()
@@ -36,7 +39,6 @@ fun MainScreen(viewModel: MainScreenViewModel = viewModel()) {
                 title = { Text("5G Signal Checker") },
                 actions = {
                     IconButton(onClick = {
-                        val csv = viewModel.getCsvData()
                         val exportResult = viewModel.exportCsvToDownloads(context)
                         if (exportResult.isSuccess) {
                             Toast.makeText(
@@ -45,7 +47,7 @@ fun MainScreen(viewModel: MainScreenViewModel = viewModel()) {
                                 Toast.LENGTH_LONG
                             ).show()
                             if (!viewModel.hasCsvViewer(context)) {
-                                plainTextPreview = csv
+                                plainTextPreview = viewModel.getCsvData()
                             }
                         } else {
                             Toast.makeText(
@@ -81,8 +83,13 @@ fun MainScreen(viewModel: MainScreenViewModel = viewModel()) {
                         Text("4G SINR: ${it.lteSinr ?: "N/A"} dB")
                     } ?: Text("Detecting...")
                     
-                    Button(onClick = { viewModel.captureAndAppendCurrentSignalToCsv() }, modifier = Modifier.padding(top = 8.dp)) {
-                        Text("Refresh Now")
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
+                        Button(onClick = { viewModel.captureAndAppendCurrentSignalToCsv() }) {
+                            Text("Capture Signal")
+                        }
+                        Button(onClick = onNavigateToWifi) {
+                            Text("View Wi-Fi Signal")
+                        }
                     }
                 }
             }

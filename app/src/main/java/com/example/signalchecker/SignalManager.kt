@@ -11,7 +11,7 @@ class SignalManager(private val context: Context) {
 
     @SuppressLint("MissingPermission")
     fun getCurrentSignalData(): SignalData {
-        val allCellInfo = telephonyManager.allCellInfo
+        val allCellInfo = telephonyManager.allCellInfo ?: emptyList()
         var nrRsrp: Int? = null
         var nrRsrq: Int? = null
         var nrSinr: Int? = null
@@ -19,6 +19,7 @@ class SignalManager(private val context: Context) {
         var lteRsrp: Int? = null
         var lteRsrq: Int? = null
         var lteSinr: Int? = null
+        var lteDbm: Int? = null
 
         for (info in allCellInfo) {
             if (info is CellInfoNr) {
@@ -34,6 +35,7 @@ class SignalManager(private val context: Context) {
                 lteRsrp = signalStrength.rsrp
                 lteRsrq = signalStrength.rsrq
                 lteSinr = signalStrength.rssnr
+                lteDbm = signalStrength.dbm
             }
         }
 
@@ -52,7 +54,7 @@ class SignalManager(private val context: Context) {
             rsrp = nrRsrp ?: lteRsrp,
             rsrq = nrRsrq ?: lteRsrq,
             sinr = nrSinr ?: lteSinr,
-            dbm = nrDbm ?: lteRsrp,
+            dbm = nrDbm ?: lteDbm,
             nrRsrp = nrRsrp,
             nrRsrq = nrRsrq,
             nrSinr = nrSinr,

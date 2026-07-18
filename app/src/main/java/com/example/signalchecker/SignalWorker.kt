@@ -49,7 +49,7 @@ class SignalWorker(
         val notification = NotificationCompat.Builder(applicationContext, channelId)
             .setContentTitle("5G Signal Check")
             .setContentText(message)
-            .setSmallIcon(android.R.drawable.stat_sys_phone_call)
+            .setSmallIcon(R.mipmap.ic_launcher)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .build()
 
