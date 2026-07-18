@@ -7,6 +7,20 @@ plugins {
 android {
     namespace = "com.example.signalchecker"
     compileSdk = 36
+
+    tasks.register("renameDebugApk") {
+        dependsOn("assembleDebug")
+        doLast {
+            val source = File(layout.buildDirectory.get().asFile, "outputs/apk/debug/app-debug.apk")
+            val target = File(layout.buildDirectory.get().asFile, "outputs/apk/debug/SignalAnalysis.apk")
+            if (source.exists()) {
+                if (target.exists()) {
+                    target.delete()
+                }
+                source.renameTo(target)
+            }
+        }
+    }
     defaultConfig {
         applicationId = "com.example.signalchecker"
         minSdk = 24
@@ -16,6 +30,10 @@ android {
     }
 
     buildTypes {
+        debug {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
