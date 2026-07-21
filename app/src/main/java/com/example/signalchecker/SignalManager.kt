@@ -2,6 +2,7 @@ package com.example.signalchecker
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.location.LocationManager
 import android.os.Build
 import android.telephony.*
 import com.example.signalchecker.data.SignalData
@@ -9,6 +10,7 @@ import com.example.signalchecker.data.SignalData
 class SignalManager(private val context: Context) {
 
     private val telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+    private val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
     @SuppressLint("MissingPermission")
     fun getCurrentSignalData(): SignalData {
@@ -33,6 +35,17 @@ class SignalManager(private val context: Context) {
         var mcc: String? = null
         var mnc: String? = null
         var bands: List<Int> = emptyList()
+
+        // Best available last-known location
+        @SuppressLint("MissingPermission")
+        val location = sequenceOf(
+            LocationManager.GPS_PROVIDER,
+            LocationManager.NETWORK_PROVIDER,
+            LocationManager.PASSIVE_PROVIDER
+        )
+            .filter { locationManager.isProviderEnabled(it) }
+            .mapNotNull { locationManager.getLastKnownLocation(it) }
+            .maxByOrNull { it.time }
 
         for (info in allCellInfo) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && info is CellInfoNr) {
@@ -108,7 +121,10 @@ class SignalManager(private val context: Context) {
             tac = tac,
             mcc = mcc,
             mnc = mnc,
-            bands = bands
+            bands = bands,
+            latitude = location?.latitude,
+            longitude = location?.longitude,
+            locationAccuracy = location?.accuracy
         )
     }
 }

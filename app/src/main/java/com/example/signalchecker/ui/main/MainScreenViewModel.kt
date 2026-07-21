@@ -268,7 +268,8 @@ class MainScreenViewModel(application: Application) : AndroidViewModel(applicati
         return "Timestamp,Network Type,Registered,Level,DBm,ASU," +
             "NR RSRP (dBm),NR RSRQ (dB),NR SINR (dB)," +
             "LTE RSRP (dBm),LTE RSRQ (dB),LTE SINR (dB),RSSI (dBm)," +
-            "Timing Advance,CI,PCI,TAC,MCC,MNC,Bands"
+            "Timing Advance,CI,PCI,TAC,MCC,MNC,Bands," +
+            "Latitude,Longitude,Location Accuracy (m)"
     }
 
     private fun csvRow(data: SignalData, format: SimpleDateFormat): String {
@@ -293,7 +294,10 @@ class MainScreenViewModel(application: Application) : AndroidViewModel(applicati
             data.tac?.toString() ?: "",
             data.mcc ?: "",
             data.mnc ?: "",
-            data.bands.joinToString("|")
+            data.bands.joinToString("|"),
+            data.latitude?.let { "%.6f".format(it) } ?: "",
+            data.longitude?.let { "%.6f".format(it) } ?: "",
+            data.locationAccuracy?.let { "%.1f".format(it) } ?: ""
         ).joinToString(",")
     }
 }

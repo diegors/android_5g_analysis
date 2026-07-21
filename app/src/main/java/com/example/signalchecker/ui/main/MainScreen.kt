@@ -76,6 +76,8 @@ fun MainScreen(
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text("Current Signal", style = MaterialTheme.typography.titleMedium)
                     currentSignal?.let {
+                        val tsFormat = remember { java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault()) }
+                        SignalInfoRow("Timestamp", tsFormat.format(java.util.Date(it.timestamp)))
                         SignalInfoRow("Network", it.networkType)
                         SignalInfoRow("Registered", if (it.registered) "Yes" else "No")
                         SignalInfoRow("Level", it.level?.toString() ?: "N/A")
@@ -95,6 +97,11 @@ fun MainScreen(
                         SignalInfoRow("MCC", it.mcc ?: "N/A")
                         SignalInfoRow("MNC", it.mnc ?: "N/A")
                         SignalInfoRow("Bands", it.bands.takeIf { b -> b.isNotEmpty() }?.joinToString(", ") ?: "N/A")
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                        Text("Location", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                        SignalInfoRow("Latitude", it.latitude?.let { v -> "%.6f".format(v) } ?: "N/A")
+                        SignalInfoRow("Longitude", it.longitude?.let { v -> "%.6f".format(v) } ?: "N/A")
+                        SignalInfoRow("Accuracy", it.locationAccuracy?.let { v -> "%.1f m".format(v) } ?: "N/A")
                     } ?: Text("Detecting...")
                     
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {

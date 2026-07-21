@@ -28,5 +28,9 @@ data class SignalData(
     val tac: Int? = null,
     val mcc: String? = null,
     val mnc: String? = null,
-    val bands: List<Int> = emptyList()
+    val bands: List<Int> = emptyList(),
+    // GPS location
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    val locationAccuracy: Float? = null
 )
