@@ -76,11 +76,25 @@ fun MainScreen(
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text("Current Signal", style = MaterialTheme.typography.titleMedium)
                     currentSignal?.let {
-                        Text("Network: ${it.networkType}")
-                        Text("5G RSRP: ${it.nrRsrp ?: "N/A"} dBm")
-                        Text("5G SINR: ${it.nrSinr ?: "N/A"} dB")
-                        Text("4G RSRP: ${it.lteRsrp ?: "N/A"} dBm")
-                        Text("4G SINR: ${it.lteSinr ?: "N/A"} dB")
+                        SignalInfoRow("Network", it.networkType)
+                        SignalInfoRow("Registered", if (it.registered) "Yes" else "No")
+                        SignalInfoRow("Level", it.level?.toString() ?: "N/A")
+                        SignalInfoRow("DBm", it.dbm?.let { v -> "$v dBm" } ?: "N/A")
+                        SignalInfoRow("ASU", it.asu?.toString() ?: "N/A")
+                        SignalInfoRow("5G RSRP", it.nrRsrp?.let { v -> "$v dBm" } ?: "N/A")
+                        SignalInfoRow("5G RSRQ", it.nrRsrq?.let { v -> "$v dB" } ?: "N/A")
+                        SignalInfoRow("5G SINR", it.nrSinr?.let { v -> "$v dB" } ?: "N/A")
+                        SignalInfoRow("4G RSRP", it.lteRsrp?.let { v -> "$v dBm" } ?: "N/A")
+                        SignalInfoRow("4G RSRQ", it.lteRsrq?.let { v -> "$v dB" } ?: "N/A")
+                        SignalInfoRow("4G SINR", it.lteSinr?.let { v -> "$v dB" } ?: "N/A")
+                        SignalInfoRow("RSSI", it.rssi?.let { v -> "$v dBm" } ?: "N/A")
+                        SignalInfoRow("Timing Advance", it.timingAdvance?.toString() ?: "N/A")
+                        SignalInfoRow("CI", it.ci?.toString() ?: "N/A")
+                        SignalInfoRow("PCI", it.pci?.toString() ?: "N/A")
+                        SignalInfoRow("TAC", it.tac?.toString() ?: "N/A")
+                        SignalInfoRow("MCC", it.mcc ?: "N/A")
+                        SignalInfoRow("MNC", it.mnc ?: "N/A")
+                        SignalInfoRow("Bands", it.bands.takeIf { b -> b.isNotEmpty() }?.joinToString(", ") ?: "N/A")
                     } ?: Text("Detecting...")
                     
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
@@ -180,6 +194,19 @@ fun HistoryTable(history: List<SignalData>) {
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun SignalInfoRow(label: String, value: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 2.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(label, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
+        Text(value, style = MaterialTheme.typography.bodySmall)
     }
 }
 

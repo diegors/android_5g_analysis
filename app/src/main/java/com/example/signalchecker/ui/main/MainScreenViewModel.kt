@@ -265,13 +265,35 @@ class MainScreenViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     private fun csvHeader(): String {
-        return "Timestamp,Network Type,RSRP (dBm),SINR (dB)"
+        return "Timestamp,Network Type,Registered,Level,DBm,ASU," +
+            "NR RSRP (dBm),NR RSRQ (dB),NR SINR (dB)," +
+            "LTE RSRP (dBm),LTE RSRQ (dB),LTE SINR (dB),RSSI (dBm)," +
+            "Timing Advance,CI,PCI,TAC,MCC,MNC,Bands"
     }
 
     private fun csvRow(data: SignalData, format: SimpleDateFormat): String {
         val formattedTime = format.format(Date(data.timestamp))
-        val rsrp = data.nrRsrp ?: data.lteRsrp ?: data.rsrp ?: ""
-        val sinr = data.nrSinr ?: data.lteSinr ?: data.sinr ?: ""
-        return "$formattedTime,${data.networkType},$rsrp,$sinr"
+        return listOf(
+            formattedTime,
+            data.networkType,
+            data.registered.toString(),
+            data.level?.toString() ?: "",
+            data.dbm?.toString() ?: "",
+            data.asu?.toString() ?: "",
+            data.nrRsrp?.toString() ?: "",
+            data.nrRsrq?.toString() ?: "",
+            data.nrSinr?.toString() ?: "",
+            data.lteRsrp?.toString() ?: "",
+            data.lteRsrq?.toString() ?: "",
+            data.lteSinr?.toString() ?: "",
+            data.rssi?.toString() ?: "",
+            data.timingAdvance?.toString() ?: "",
+            data.ci?.toString() ?: "",
+            data.pci?.toString() ?: "",
+            data.tac?.toString() ?: "",
+            data.mcc ?: "",
+            data.mnc ?: "",
+            data.bands.joinToString("|")
+        ).joinToString(",")
     }
 }
