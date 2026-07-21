@@ -1,4 +1,4 @@
-# 5G Signal Checker
+# Cellular Signal Checker
 
 An Android 16 (API 36) application designed to monitor 5G cellular signal strength periodically.
 

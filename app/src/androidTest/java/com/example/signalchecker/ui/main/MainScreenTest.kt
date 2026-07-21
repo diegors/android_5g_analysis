@@ -16,7 +16,7 @@ class MainScreenTest {
     @Test
     fun mainScreen_titleIsDisplayed() {
         composeTestRule.setContent { MainScreen() }
-        composeTestRule.onNodeWithText("5G Signal Checker").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Cellular Signal Checker").assertIsDisplayed()
     }
 
     @Test

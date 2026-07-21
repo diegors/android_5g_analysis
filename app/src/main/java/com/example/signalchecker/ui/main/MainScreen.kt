@@ -36,7 +36,7 @@ fun MainScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("5G Signal Checker") },
+                title = { Text("Cellular Signal Checker") },
                 actions = {
                     IconButton(onClick = {
                         val exportResult = viewModel.exportCsvToDownloads(context)

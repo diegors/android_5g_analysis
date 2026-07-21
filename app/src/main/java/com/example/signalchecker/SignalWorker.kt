@@ -41,7 +41,7 @@ class SignalWorker(
         val channelId = "signal_checker_channel"
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(channelId, "5G Signal Checker", NotificationManager.IMPORTANCE_DEFAULT)
+            val channel = NotificationChannel(channelId, "Cellular Signal Checker", NotificationManager.IMPORTANCE_DEFAULT)
             notificationManager.createNotificationChannel(channel)
         }
 
