@@ -1,5 +1,6 @@
 package com.example.signalchecker.ui.main
 
+import android.annotation.SuppressLint
 import android.app.Application
 import android.content.ContentUris
 import android.content.ContentValues
@@ -32,6 +33,7 @@ class MainScreenViewModel(application: Application) : AndroidViewModel(applicati
         const val HISTORY_KEY = "history"
         const val LAST_EXPORTED_TIMESTAMP_KEY = "last_exported_timestamp"
         const val EXPORT_FILE_NAME = "signal_results.csv"
+        const val EXPORT_FILE_TXT = "signal_results.txt"
     }
 
     private val _history = MutableStateFlow<List<SignalData>>(emptyList())
@@ -162,11 +164,14 @@ class MainScreenViewModel(application: Application) : AndroidViewModel(applicati
         rows: List<SignalData>,
         format: SimpleDateFormat,
     ): Int {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        val result = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             appendForAndroidQAndAbove(context, rows, format)
         } else {
             appendForPreQ(rows, format)
         }
+        // Sync .txt copy with CSV
+        syncTxtCopy(context)
+        return result
     }
 
     private fun appendForAndroidQAndAbove(
@@ -262,6 +267,80 @@ class MainScreenViewModel(application: Application) : AndroidViewModel(applicati
         }
 
         return rows.size
+    }
+
+    private fun syncTxtCopy(context: Context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            syncTxtCopyAndroidQ(context)
+        } else {
+            syncTxtCopyPreQ()
+        }
+    }
+
+    @SuppressLint("Range")
+    private fun syncTxtCopyAndroidQ(context: Context) {
+        try {
+            val resolver = context.contentResolver
+            val collection = MediaStore.Downloads.EXTERNAL_CONTENT_URI
+            val projection = arrayOf(MediaStore.Downloads._ID, OpenableColumns.SIZE)
+            val selection = "${MediaStore.Downloads.DISPLAY_NAME} = ? AND ${MediaStore.Downloads.RELATIVE_PATH} = ?"
+            val selectionArgs = arrayOf(EXPORT_FILE_NAME, "${Environment.DIRECTORY_DOWNLOADS}/")
+
+            var csvUri: android.net.Uri? = null
+            resolver.query(collection, projection, selection, selectionArgs, null)?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    val idIndex = cursor.getColumnIndexOrThrow(MediaStore.Downloads._ID)
+                    val id = cursor.getLong(idIndex)
+                    csvUri = ContentUris.withAppendedId(collection, id)
+                }
+            }
+
+            if (csvUri != null) {
+                val csvContent = resolver.openInputStream(csvUri!!)?.bufferedReader().use { it?.readText() ?: "" }
+
+                val txtSelection = "${MediaStore.Downloads.DISPLAY_NAME} = ? AND ${MediaStore.Downloads.RELATIVE_PATH} = ?"
+                val txtSelectionArgs = arrayOf(EXPORT_FILE_TXT, "${Environment.DIRECTORY_DOWNLOADS}/")
+                var txtUri: android.net.Uri? = null
+                resolver.query(collection, projection, txtSelection, txtSelectionArgs, null)?.use { cursor ->
+                    if (cursor.moveToFirst()) {
+                        val idIndex = cursor.getColumnIndexOrThrow(MediaStore.Downloads._ID)
+                        val id = cursor.getLong(idIndex)
+                        txtUri = ContentUris.withAppendedId(collection, id)
+                    }
+                }
+
+                if (txtUri == null) {
+                    val values = ContentValues().apply {
+                        put(MediaStore.Downloads.DISPLAY_NAME, EXPORT_FILE_TXT)
+                        put(MediaStore.Downloads.MIME_TYPE, "text/plain")
+                        put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+                    }
+                    txtUri = resolver.insert(collection, values)
+                }
+
+                if (txtUri != null) {
+                    resolver.openOutputStream(txtUri!!, "wt")?.bufferedWriter().use { writer ->
+                        writer?.append(csvContent)
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            // Silently fail on .txt sync
+        }
+    }
+
+    private fun syncTxtCopyPreQ() {
+        try {
+            val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            val csvFile = File(downloadsDir, EXPORT_FILE_NAME)
+            val txtFile = File(downloadsDir, EXPORT_FILE_TXT)
+
+            if (csvFile.exists()) {
+                csvFile.copyTo(txtFile, overwrite = true)
+            }
+        } catch (e: Exception) {
+            // Silently fail on .txt sync
+        }
     }
 
     private fun csvHeader(): String {
