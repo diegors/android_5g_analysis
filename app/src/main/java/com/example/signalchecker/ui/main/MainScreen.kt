@@ -8,6 +8,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -34,6 +35,7 @@ fun MainScreen(
     val isMonitoring by viewModel.isMonitoring.collectAsState()
     var intervalText by remember { mutableStateOf("15") }
     var plainTextPreview by remember { mutableStateOf<String?>(null) }
+    var isRefreshing by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -144,14 +146,34 @@ fun MainScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Text("History (Last 50 checks)", style = MaterialTheme.typography.titleMedium)
-            HistoryTable(history = history)
-
-            Spacer(modifier = Modifier.height(16.dp))
-
             currentSignal?.let { signal ->
                 if (signal.allCells.isNotEmpty()) {
-                    Text("All Detected Cells (${signal.allCells.size})", style = MaterialTheme.typography.titleMedium)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                    ) {
+                        Text("All Detected Cells (${signal.allCells.size})", style = MaterialTheme.typography.titleMedium)
+                        IconButton(
+                            onClick = {
+                                isRefreshing = true
+                                viewModel.captureAndAppendCurrentSignalToCsv()
+                                isRefreshing = false
+                                Toast.makeText(context, "Cell data refreshed and saved", Toast.LENGTH_SHORT).show()
+                            },
+                            enabled = !isRefreshing,
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Refresh,
+                                contentDescription = "Refresh cells",
+                                modifier = Modifier.size(20.dp),
+                                tint = if (isRefreshing) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
                     Spacer(modifier = Modifier.height(8.dp))
                     AllCellsTable(cells = signal.allCells)
                 }
@@ -191,41 +213,6 @@ fun MainScreen(
                     }
                 }
             )
-        }
-    }
-}
-
-@Composable
-fun HistoryTable(history: List<SignalData>) {
-    val horizontalScroll = rememberScrollState()
-    val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(horizontalScroll)
-        ) {
-            Row(modifier = Modifier.padding(vertical = 8.dp)) {
-                TableCell("Timestamp", isHeader = true)
-                TableCell("Network Type", isHeader = true)
-                TableCell("RSRP (dBm)", isHeader = true)
-                TableCell("SINR (dB)", isHeader = true)
-            }
-            HorizontalDivider()
-            LazyColumn(modifier = Modifier.heightIn(max = 320.dp)) {
-                items(history) { data ->
-                    val rsrp = data.nrRsrp ?: data.lteRsrp ?: data.rsrp
-                    val sinr = data.nrSinr ?: data.lteSinr ?: data.sinr
-                    Row(modifier = Modifier.padding(vertical = 6.dp)) {
-                        TableCell(format.format(Date(data.timestamp)))
-                        TableCell(data.networkType)
-                        TableCell(rsrp?.toString() ?: "N/A")
-                        TableCell(sinr?.toString() ?: "N/A")
-                    }
-                    HorizontalDivider()
-                }
-            }
         }
     }
 }
