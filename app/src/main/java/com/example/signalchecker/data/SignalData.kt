@@ -6,17 +6,35 @@ import kotlinx.serialization.Serializable
 data class CellEntry(
     val type: String,
     val registered: Boolean = false,
+    // Signal strength
     val dbm: Int? = null,
     val level: Int? = null,
+    val asu: Int? = null,
+    // RSRP/RSRQ/SINR (SS-based, 5G)
     val rsrp: Int? = null,
     val rsrq: Int? = null,
     val sinr: Int? = null,
+    // CSI-based (5G)
+    val csiRsrp: Int? = null,
+    val csiRsrq: Int? = null,
+    val csiSinr: Int? = null,
+    // LTE-specific
     val rssi: Int? = null,
+    val cqi: Int? = null,
+    val timingAdvance: Int? = null,
+    // Cell identity
     val pci: Int? = null,
     val ci: Long? = null,
     val tac: Int? = null,
+    val lac: Int? = null,
+    val arfcn: Int? = null,
+    val bandwidth: Int? = null,
     val mcc: String? = null,
     val mnc: String? = null,
+    // GSM-specific
+    val bsic: Int? = null,
+    val lac_gsm: Int? = null,
+    val cid: Long? = null,
     val bands: List<Int> = emptyList()
 )
 

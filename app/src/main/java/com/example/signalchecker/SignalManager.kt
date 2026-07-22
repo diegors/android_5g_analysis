@@ -61,7 +61,14 @@ class SignalManager(private val context: Context) {
                     rsrp = sig.ssRsrp,
                     rsrq = sig.ssRsrq,
                     sinr = sig.ssSinr,
+                    csiRsrp = sig.csiRsrp,
+                    csiRsrq = sig.csiRsrq,
+                    csiSinr = sig.csiSinr,
                     pci = id.pci.takeIf { it != Int.MAX_VALUE },
+                    tac = id.tac.takeIf { it != Int.MAX_VALUE },
+                    arfcn = id.nrarfcn.takeIf { it != Int.MAX_VALUE },
+                    mcc = id.mccString,
+                    mnc = id.mncString,
                     bands = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) id.bands.toList() else emptyList()
                 ))
                 val preferThis = nrRsrp == null || info.isRegistered
@@ -81,13 +88,18 @@ class SignalManager(private val context: Context) {
                     registered = info.isRegistered,
                     dbm = sig.dbm,
                     level = sig.level,
+                    asu = sig.asuLevel,
                     rsrp = sig.rsrp,
                     rsrq = sig.rsrq,
                     sinr = sig.rssnr,
                     rssi = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) sig.rssi.takeIf { it != Int.MAX_VALUE } else null,
+                    cqi = sig.cqi.takeIf { it != Int.MAX_VALUE },
+                    timingAdvance = sig.timingAdvance.takeIf { it != Int.MAX_VALUE },
                     pci = id.pci.takeIf { it != Int.MAX_VALUE },
                     ci = id.ci.takeIf { it != Int.MAX_VALUE }?.toLong(),
                     tac = id.tac.takeIf { it != Int.MAX_VALUE },
+                    arfcn = id.earfcn.takeIf { it != Int.MAX_VALUE },
+                    bandwidth = id.bandwidth.takeIf { it != Int.MAX_VALUE },
                     mcc = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) id.mccString else null,
                     mnc = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) id.mncString else null,
                     bands = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) id.bands.toList() else emptyList()
@@ -126,9 +138,12 @@ class SignalManager(private val context: Context) {
                     registered = info.isRegistered,
                     dbm = sig.dbm,
                     level = sig.level,
+                    asu = sig.asuLevel,
                     rssi = sig.dbm,
                     pci = id.psc.takeIf { it != Int.MAX_VALUE },
                     ci = id.cid.takeIf { it != Int.MAX_VALUE }?.toLong(),
+                    lac = id.lac.takeIf { it != Int.MAX_VALUE },
+                    arfcn = id.uarfcn.takeIf { it != Int.MAX_VALUE },
                     mcc = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) id.mccString else null,
                     mnc = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) id.mncString else null
                 ))
@@ -142,8 +157,12 @@ class SignalManager(private val context: Context) {
                     registered = info.isRegistered,
                     dbm = sig.dbm,
                     level = sig.level,
+                    asu = sig.asuLevel,
                     rssi = sig.dbm,
-                    ci = id.cid.takeIf { it != Int.MAX_VALUE }?.toLong(),
+                    bsic = id.bsic.takeIf { it != Int.MAX_VALUE },
+                    cid = id.cid.takeIf { it != Int.MAX_VALUE }?.toLong(),
+                    lac_gsm = id.lac.takeIf { it != Int.MAX_VALUE },
+                    arfcn = id.arfcn.takeIf { it != Int.MAX_VALUE },
                     mcc = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) id.mccString else null,
                     mnc = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) id.mncString else null
                 ))
