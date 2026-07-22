@@ -152,10 +152,7 @@ fun MainScreen(
                 if (signal.allCells.isNotEmpty()) {
                     Text("All Detected Cells (${signal.allCells.size})", style = MaterialTheme.typography.titleMedium)
                     Spacer(modifier = Modifier.height(8.dp))
-                    signal.allCells.forEachIndexed { index, cell ->
-                        AllCellsCard(index = index + 1, cell = cell)
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
+                    AllCellsTable(cells = signal.allCells)
                 }
             }
 
@@ -233,47 +230,44 @@ fun HistoryTable(history: List<SignalData>) {
 }
 
 @Composable
-private fun AllCellsCard(index: Int, cell: CellEntry) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = if (cell.registered)
-            CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-        else
-            CardDefaults.cardColors()
-    ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    "Cell #$index — ${cell.type}",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-                if (cell.registered) {
-                    Text(
-                        "● Connected",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.SemiBold
-                    )
+private fun AllCellsTable(cells: List<CellEntry>) {
+    val horizontalScroll = rememberScrollState()
+
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(horizontalScroll)
+        ) {
+            Row(modifier = Modifier.padding(vertical = 8.dp)) {
+                TableCell("#", isHeader = true, width = 40.dp)
+                TableCell("Type", isHeader = true)
+                TableCell("Status", isHeader = true)
+                TableCell("Signal (dBm)", isHeader = true)
+                TableCell("Level", isHeader = true)
+                TableCell("RSRP", isHeader = true)
+                TableCell("RSRQ", isHeader = true)
+                TableCell("SINR", isHeader = true)
+                TableCell("PCI", isHeader = true)
+            }
+            HorizontalDivider()
+            LazyColumn(modifier = Modifier.heightIn(max = 400.dp)) {
+                items(cells.size) { index ->
+                    val cell = cells[index]
+                    Row(modifier = Modifier.padding(vertical = 6.dp)) {
+                        TableCell((index + 1).toString(), width = 40.dp)
+                        TableCell(cell.type)
+                        TableCell(if (cell.registered) "✓ Connected" else "—")
+                        TableCell(cell.dbm?.toString() ?: "N/A")
+                        TableCell(cell.level?.toString() ?: "N/A")
+                        TableCell(cell.rsrp?.toString() ?: "N/A")
+                        TableCell(cell.rsrq?.toString() ?: "N/A")
+                        TableCell(cell.sinr?.toString() ?: "N/A")
+                        TableCell(cell.pci?.toString() ?: "N/A")
+                    }
+                    HorizontalDivider()
                 }
             }
-            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-            cell.dbm?.let { SignalInfoRow("Signal", "$it dBm") }
-            cell.level?.let { SignalInfoRow("Level", it.toString()) }
-            cell.rsrp?.let { SignalInfoRow("RSRP", "$it dBm") }
-            cell.rsrq?.let { SignalInfoRow("RSRQ", "$it dB") }
-            cell.sinr?.let { SignalInfoRow("SINR", "$it dB") }
-            cell.rssi?.let { SignalInfoRow("RSSI", "$it dBm") }
-            cell.pci?.let { SignalInfoRow("PCI", it.toString()) }
-            cell.ci?.let { SignalInfoRow("CI", it.toString()) }
-            cell.tac?.let { SignalInfoRow("TAC", it.toString()) }
-            cell.mcc?.let { SignalInfoRow("MCC", it) }
-            cell.mnc?.let { SignalInfoRow("MNC", it) }
-            if (cell.bands.isNotEmpty()) SignalInfoRow("Bands", cell.bands.joinToString(", "))
         }
     }
 }
@@ -292,11 +286,11 @@ private fun SignalInfoRow(label: String, value: String) {
 }
 
 @Composable
-private fun TableCell(value: String, isHeader: Boolean = false) {
+private fun TableCell(value: String, isHeader: Boolean = false, width: Dp = 150.dp) {
     Text(
         text = value,
         modifier = Modifier
-            .width(150.dp)
+            .width(width)
             .padding(horizontal = 8.dp),
         style = MaterialTheme.typography.bodySmall,
         fontWeight = if (isHeader) FontWeight.SemiBold else FontWeight.Normal
