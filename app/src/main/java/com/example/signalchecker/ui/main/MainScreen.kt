@@ -144,6 +144,20 @@ fun MainScreen(
 
             Text("History (Last 50 checks)", style = MaterialTheme.typography.titleMedium)
             HistoryTable(history = history)
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Divider()
+            val currentTime = remember { SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date()) }
+            Text(
+                text = "App Version 1.0.0 | Built: $currentTime",
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
 
         if (plainTextPreview != null) {
