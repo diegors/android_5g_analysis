@@ -32,8 +32,8 @@ class MainScreenViewModel(application: Application) : AndroidViewModel(applicati
         const val PREFS_NAME = "signal_prefs"
         const val HISTORY_KEY = "history"
         const val LAST_EXPORTED_TIMESTAMP_KEY = "last_exported_timestamp"
-        const val EXPORT_FILE_NAME = "signal_results.csv"
-        const val EXPORT_FILE_TXT = "signal_results.txt"
+        const val EXPORT_FILE_NAME = "CellularSignalResults.csv"
+        const val EXPORT_FILE_TXT = "CellularSignalResults.txt"
     }
 
     private val _history = MutableStateFlow<List<SignalData>>(emptyList())

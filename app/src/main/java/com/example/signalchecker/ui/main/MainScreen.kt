@@ -10,7 +10,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -172,22 +171,16 @@ fun MainScreen(
                         verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
                     ) {
                         Text("All Detected Cells (${signal.allCells.size})", style = MaterialTheme.typography.titleMedium)
-                        IconButton(
+                        Button(
                             onClick = {
                                 isRefreshing = true
                                 viewModel.captureAndAppendCurrentSignalToCsv()
                                 isRefreshing = false
-                                Toast.makeText(context, "Cell data refreshed and saved", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "Refreshed and saved to CellularSignalResults.csv", Toast.LENGTH_SHORT).show()
                             },
-                            enabled = !isRefreshing,
-                            modifier = Modifier.size(36.dp)
+                            enabled = !isRefreshing
                         ) {
-                            Icon(
-                                Icons.Default.Refresh,
-                                contentDescription = "Refresh cells",
-                                modifier = Modifier.size(20.dp),
-                                tint = if (isRefreshing) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                            )
+                            Text("Refresh & Save")
                         }
                     }
                     Spacer(modifier = Modifier.height(8.dp))
