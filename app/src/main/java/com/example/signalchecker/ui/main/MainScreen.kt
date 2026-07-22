@@ -6,6 +6,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Refresh
@@ -32,10 +34,9 @@ fun MainScreen(
     val context = LocalContext.current
     val history by viewModel.history.collectAsState()
     val currentSignal by viewModel.currentSignal.collectAsState()
-    val isMonitoring by viewModel.isMonitoring.collectAsState()
-    var intervalText by remember { mutableStateOf("15") }
     var plainTextPreview by remember { mutableStateOf<String?>(null) }
     var isRefreshing by remember { mutableStateOf(false) }
+    var selectedCellIndex by remember { mutableStateOf<Int?>(null) }
 
     Scaffold(
         topBar = {
@@ -79,7 +80,45 @@ fun MainScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text("Current Signal", style = MaterialTheme.typography.titleMedium)
-                    currentSignal?.let {
+                    
+                    val displayCell = currentSignal?.let { signal ->
+                        selectedCellIndex?.let { signal.allCells.getOrNull(it) }
+                    }
+                    
+                    if (displayCell != null) {
+                        // Display selected cell from table
+                        SignalInfoRow("Type", displayCell.type)
+                        SignalInfoRow("Registered", if (displayCell.registered) "Yes" else "No")
+                        SignalInfoRow("MCC", displayCell.mcc ?: "N/A")
+                        SignalInfoRow("MNC", displayCell.mnc ?: "N/A")
+                        SignalInfoRow("CI/CID", displayCell.ci?.toString() ?: "N/A")
+                        SignalInfoRow("PCI/PSC", displayCell.pci?.toString() ?: "N/A")
+                        SignalInfoRow("TAC/LAC", displayCell.tac?.toString() ?: (displayCell.lac?.toString() ?: "N/A"))
+                        SignalInfoRow("ARFCN", displayCell.arfcn?.toString() ?: "N/A")
+                        displayCell.bandwidth?.let { SignalInfoRow("Bandwidth", "$it kHz") }
+                        displayCell.bsic?.let { SignalInfoRow("BSIC", it.toString()) }
+                        SignalInfoRow("DBm", displayCell.dbm?.let { "$it dBm" } ?: "N/A")
+                        displayCell.asu?.let { SignalInfoRow("ASU", it.toString()) }
+                        displayCell.level?.let { SignalInfoRow("Level", it.toString()) }
+                        displayCell.rsrp?.let { SignalInfoRow("RSRP", "$it dBm") }
+                        displayCell.rsrq?.let { SignalInfoRow("RSRQ", "$it dB") }
+                        displayCell.sinr?.let { SignalInfoRow("SINR", "$it dB") }
+                        displayCell.csiRsrp?.let { SignalInfoRow("CSI-RSRP", "$it dBm") }
+                        displayCell.csiRsrq?.let { SignalInfoRow("CSI-RSRQ", "$it dB") }
+                        displayCell.csiSinr?.let { SignalInfoRow("CSI-SINR", "$it dB") }
+                        displayCell.rssi?.let { SignalInfoRow("RSSI", "$it dBm") }
+                        displayCell.cqi?.let { SignalInfoRow("CQI", it.toString()) }
+                        displayCell.timingAdvance?.let { SignalInfoRow("Timing Advance", it.toString()) }
+                        if (displayCell.bands.isNotEmpty()) SignalInfoRow("Bands", displayCell.bands.joinToString(", "))
+                        
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
+                            Button(onClick = { selectedCellIndex = null }) {
+                                Text("Clear Selection")
+                            }
+                        }
+                    } else if (currentSignal != null) {
+                        // Display current signal (original behavior)
+                        val it = currentSignal!!
                         val tsFormat = remember { java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault()) }
                         SignalInfoRow("Timestamp", tsFormat.format(java.util.Date(it.timestamp)))
                         SignalInfoRow("Network", it.networkType)
@@ -106,40 +145,17 @@ fun MainScreen(
                         SignalInfoRow("Latitude", it.latitude?.let { v -> "%.6f".format(v) } ?: "N/A")
                         SignalInfoRow("Longitude", it.longitude?.let { v -> "%.6f".format(v) } ?: "N/A")
                         SignalInfoRow("Accuracy", it.locationAccuracy?.let { v -> "%.1f m".format(v) } ?: "N/A")
-                    } ?: Text("Detecting...")
-                    
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
-                        Button(onClick = { viewModel.captureAndAppendCurrentSignalToCsv() }) {
-                            Text("Capture Signal")
+                        
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
+                            Button(onClick = { viewModel.captureAndAppendCurrentSignalToCsv() }) {
+                                Text("Capture Signal")
+                            }
+                            Button(onClick = onNavigateToWifi) {
+                                Text("View Wi-Fi Signal")
+                            }
                         }
-                        Button(onClick = onNavigateToWifi) {
-                            Text("View Wi-Fi Signal")
-                        }
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text("Monitoring Settings", style = MaterialTheme.typography.titleMedium)
-            TextField(
-                value = intervalText,
-                onValueChange = { intervalText = it },
-                label = { Text("Interval (Minutes, min 15)") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Row(modifier = Modifier.padding(vertical = 8.dp)) {
-                if (isMonitoring) {
-                    Button(onClick = { viewModel.stopMonitoring() }, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)) {
-                        Text("Stop Background Monitoring")
-                    }
-                } else {
-                    Button(onClick = {
-                        viewModel.startMonitoring(intervalText.toLongOrNull() ?: 15)
-                        viewModel.captureAndAppendCurrentSignalToCsv()
-                    }) {
-                        Text("Start Background Monitoring")
+                    } else {
+                        Text("Detecting...")
                     }
                 }
             }
@@ -175,7 +191,7 @@ fun MainScreen(
                         }
                     }
                     Spacer(modifier = Modifier.height(8.dp))
-                    AllCellsTable(cells = signal.allCells)
+                    AllCellsTable(cells = signal.allCells, selectedIndex = selectedCellIndex, onCellSelected = { selectedCellIndex = it })
                 }
             }
 
@@ -218,7 +234,7 @@ fun MainScreen(
 }
 
 @Composable
-private fun AllCellsTable(cells: List<CellEntry>) {
+private fun AllCellsTable(cells: List<CellEntry>, selectedIndex: Int? = null, onCellSelected: (Int) -> Unit = {}) {
     val horizontalScroll = rememberScrollState()
 
     Card(modifier = Modifier.fillMaxWidth()) {
@@ -261,7 +277,13 @@ private fun AllCellsTable(cells: List<CellEntry>) {
                     val ci = c.ci ?: c.cid
                     val pci = c.pci
                     val tac = c.tac ?: c.lac ?: c.lac_gsm
-                    Row(modifier = Modifier.padding(vertical = 6.dp)) {
+                    val isSelected = selectedIndex == index
+                    Row(
+                        modifier = Modifier
+                            .padding(vertical = 6.dp)
+                            .clickable { onCellSelected(index) }
+                            .background(if (isSelected) androidx.compose.material3.MaterialTheme.colorScheme.primaryContainer else androidx.compose.material3.MaterialTheme.colorScheme.surface)
+                    ) {
                         TableCell((index + 1).toString(),                       width = 36.dp)
                         TableCell(c.type,                                        width = 110.dp)
                         TableCell(if (c.registered) "Yes" else "No")
