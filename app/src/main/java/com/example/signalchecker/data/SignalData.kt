@@ -3,6 +3,24 @@ package com.example.signalchecker.data
 import kotlinx.serialization.Serializable
 
 @Serializable
+data class CellEntry(
+    val type: String,
+    val registered: Boolean = false,
+    val dbm: Int? = null,
+    val level: Int? = null,
+    val rsrp: Int? = null,
+    val rsrq: Int? = null,
+    val sinr: Int? = null,
+    val rssi: Int? = null,
+    val pci: Int? = null,
+    val ci: Long? = null,
+    val tac: Int? = null,
+    val mcc: String? = null,
+    val mnc: String? = null,
+    val bands: List<Int> = emptyList()
+)
+
+@Serializable
 data class SignalData(
     val timestamp: Long,
     val networkType: String,
@@ -32,5 +50,7 @@ data class SignalData(
     // GPS location
     val latitude: Double? = null,
     val longitude: Double? = null,
-    val locationAccuracy: Float? = null
+    val locationAccuracy: Float? = null,
+    // All detected cells
+    val allCells: List<CellEntry> = emptyList()
 )
