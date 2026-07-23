@@ -146,9 +146,6 @@ fun MainScreen(
                         SignalInfoRow("Accuracy", it.locationAccuracy?.let { v -> "%.1f m".format(v) } ?: "N/A")
                         
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
-                            Button(onClick = { viewModel.captureAndAppendCurrentSignalToCsv() }) {
-                                Text("Capture Signal")
-                            }
                             Button(onClick = onNavigateToWifi) {
                                 Text("View Wi-Fi Signal")
                             }
